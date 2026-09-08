@@ -1,0 +1,7 @@
+.env
+__pycache__
+__init__.py
+venv
+database.py
+PROJECT.md
+/.vscode
