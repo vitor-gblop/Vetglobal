@@ -11,7 +11,7 @@ def worker_callback(
     job_id: int,
     payload: JobCompletion,
     db: Session = Depends(get_db),
-):
+) -> JobInternResponse:
     job = db.query(Job).filter_by(id=job_id).first()
     if not job:
         raise HTTPException(

@@ -12,6 +12,11 @@ class PetCreate(BaseModel):
     age: int = Field(..., ge=0, example=5)
 
 
+class PetUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    owner_name: str | None = Field(default=None, min_length=1)
+
+
 class PetResponse(PetCreate):
     # 
     id: int
