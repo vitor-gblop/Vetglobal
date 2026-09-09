@@ -1,0 +1,11 @@
+nome do pet: Luna
+idade: 4
+nome do proprietário: Ana
+raça: Corgi
+
+sintomas:
+Vômito
+Desidratação
+
+notas clínicas:
+Sem febre, conduta: hidratação oral

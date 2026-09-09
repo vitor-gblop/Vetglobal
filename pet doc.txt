@@ -1,0 +1,11 @@
+pet name: Hank
+age: 5
+owner name: John Bergeson
+breed: Corgi
+
+symptoms:
+Vômitos intermitentes
+Letargia
+
+clinical notes:
+Paciente apresentou melhora após fluidoterapia
