@@ -2,8 +2,8 @@
 __pycache__
 __init__.py
 venv
-database.py
 PROJECT.md
 /.vscode
 docs
 .pytest_cache
+node_modules
