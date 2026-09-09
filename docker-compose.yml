@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vetglobal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vetglobal
+      POSTGRES_USER: vetglobal
+      POSTGRES_PASSWORD: vetglobal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vetglobal -d vetglobal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    container_name: vetglobal-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://vetglobal:vetglobal@postgres:5432/vetglobal
+      API_BASE_URL: http://api:8000
+      WORKER_START_URL: http://worker:8001/worker/start
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app/api
+
+  worker:
+    container_name: vetglobal-worker
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://vetglobal:vetglobal@postgres:5432/vetglobal
+      WORKER_HOST: 0.0.0.0
+      WORKER_PORT: "8001"
+      WORKER_RELOAD: "false"
+      GOOGLE_API_KEY: ""
+      GOOGLE_MODEL: gemini-2.5-flash-lite
+      SUMMARY_LANGUAGE: portuguese
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./worker:/app/worker
+
+  frontend:
+    container_name: vetglobal-frontend
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
