@@ -33,6 +33,7 @@ pet_router = APIRouter(prefix='/pets', tags=['pets'])
 load_dotenv()
 
 # Criação
+'''Cria um pet novo sem criar um documento'''
 @pet_router.post('/', response_model= PetResponse, status_code=status.HTTP_201_CREATED)
 async def create_pet(
     payload: PetCreate, 
@@ -100,7 +101,7 @@ def delete_pet(pet_id: int, db: Session = Depends(get_db)) -> None:
     return None
 
 
-
+'''Sumarização/resumo aatraves de padrões'''
 @pet_router.post('/{pet_id}/documents', status_code=status.HTTP_202_ACCEPTED)
 async def upload_document(
     pet_id: int,
@@ -111,7 +112,7 @@ async def upload_document(
     body = DocumentPayload(document_type=document_type)
     return await _upload_document(pet_id, body, file, db, use_ai=False)
 
-
+'''Sumarização/resumo com uso de IA'''
 @pet_router.post('/{pet_id}/documents/ai', status_code=status.HTTP_202_ACCEPTED)
 async def upload_document_for_ai(
     pet_id: int,
@@ -122,7 +123,7 @@ async def upload_document_for_ai(
     body = DocumentPayload(document_type=document_type)
     return await _upload_document(pet_id, body, file, db, use_ai=True)
 
-
+'''Como os docs unicos geram um erro ao serem reenviados, posso modificar um doc enviado por essa rota'''
 @pet_router.put('/documents/{document_id}', status_code=status.HTTP_202_ACCEPTED)
 async def overwrite_document(
     document_id: int,
@@ -150,7 +151,7 @@ async def overwrite_document(
         document_to_overwrite=document,
     )
 
-
+'''utilitario de upload que cria documentos e jobs. Verifica o tipo de arquivo, se deve ser sobreescrito ou não'''
 async def _upload_document(
     pet_id: int,
     body: DocumentPayload,
@@ -164,6 +165,7 @@ async def _upload_document(
     # 1. Busca e valida se o pet existe
     _pet = _get_pet(pet_id, db)
 
+    # le o conteudo
     contents = await file.read()
     candidate_path = (
         Path(document_to_overwrite.file_path)
@@ -176,6 +178,7 @@ async def _upload_document(
             f".{file_ext}",
         )
     )
+    # verifica se o arquivo existe no banco
     candidate_file_name = candidate_path.name
     if (
         not document_to_overwrite
@@ -191,7 +194,8 @@ async def _upload_document(
             status_code=status.HTTP_409_CONFLICT,
             detail="Já existe um documento UNIQUE com esse nome",
         )
-
+    
+    # Salva o arquivo
     file_path = save_file_to_disk(
         file,
         body.document_type.value,
@@ -205,6 +209,7 @@ async def _upload_document(
     )
     file_name = Path(file_path).name
 
+    # Recupera o conteudo
     if file_ext == "txt":
         # 2. Lendo o conteúdo para a lógica do worker
         text_content = file_reader(contents)  # retorna texto

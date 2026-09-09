@@ -90,7 +90,7 @@ def extract_formated_data(text: str) -> str:
     """Alias compatível com a versão anterior para o nome da função com erro de grafia."""
     return extract_formatted_data(text)
 
-
+'''Salva arquivos no disco (no momento) pra recuperar depois'''
 def save_file_to_disk(
     file: UploadFile,
     doc_type: str,

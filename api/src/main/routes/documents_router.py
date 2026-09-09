@@ -37,7 +37,7 @@ def _document_response(document: Pet_Document) -> dict:
 def retrieve_doc(document_id: int, db: Session = Depends(get_db)):
     return _document_response(_get_document(document_id, db))
 
-
+'''Rota de polling de 25s'''
 @document_router.get("/{document_id}/poll", status_code=status.HTTP_200_OK)
 async def poll_document(
     document_id: int,

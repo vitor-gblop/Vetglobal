@@ -6,6 +6,7 @@ from src.main.schemas.job_schemas import JobCompletion, JobInternResponse, JobSt
 
 intern_router = APIRouter(prefix="/internal", tags=["internal"])
 
+'''Rota chamada pelo worker pra completar um job'''
 @intern_router.post("/jobs/{job_id}/complete", status_code=status.HTTP_200_OK)
 def worker_callback(
     job_id: int,
