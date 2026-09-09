@@ -152,6 +152,8 @@ No Windows, use o executável equivalente dentro de `venv/Scripts`.
 
 ## Execução
 
+### Opção 1: Execução local (sem Docker)
+
 Abra dois terminais na raiz do projeto.
 
 ### Worker
@@ -168,6 +170,33 @@ cd worker
 cd api
 ./venv/bin/python -m uvicorn main:app
   --host 127.0.0.1 --port 8000
+```
+
+### Opção 2: Execução com Docker Compose
+
+Na raiz do projeto, execute:
+
+```bash
+docker compose up --build
+```
+
+Esse comando inicia automaticamente:
+
+- PostgreSQL em `localhost:5432`
+- API FastAPI em `http://localhost:8000`
+- Worker em `http://localhost:8001`
+- Frontend React em `http://localhost:5173`
+
+Para parar os containers:
+
+```bash
+docker compose down
+```
+
+Para remover também os volumes do banco:
+
+```bash
+docker compose down -v
 ```
 
 Verifique o status dos serviços:
