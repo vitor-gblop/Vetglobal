@@ -5,3 +5,4 @@ venv
 database.py
 PROJECT.md
 /.vscode
+docs
