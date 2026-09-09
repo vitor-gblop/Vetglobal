@@ -218,6 +218,7 @@ Content-Type: multipart/form-data
 
 ```bash
 curl -X POST http://127.0.0.1:8000/pets/1/documents \
+  -F 'document_type=UNIQUE' \
   -F 'file=@pet_doc_pdf.pdf;type=application/pdf'
 ```
 
@@ -246,6 +247,7 @@ Content-Type: multipart/form-data
 
 ```bash
 curl -X POST http://127.0.0.1:8000/pets/1/documents/ai \
+  -F 'document_type=UNIQUE' \
   -F 'file=@pet_doc_pdf.pdf;type=application/pdf'
 ```
 
@@ -259,6 +261,17 @@ GET /documents/{document_id}
 ```
 
 Retorna metadados, pet associado e resumo quando disponível.
+
+### Sobrescrever documento
+
+```http
+PUT /pets/documents/{document_id}
+Content-Type: multipart/form-data
+```
+
+Use o campo `file` para substituir o conteúdo do documento existente. O mesmo
+registro e caminho de armazenamento são mantidos, e um novo job é criado para
+gerar o resumo.
 
 ### Polling
 
@@ -374,16 +387,24 @@ manter a suíte rápida e determinística.
 
 - **API e worker separados:** permitem escalar e reiniciar o processamento sem
   bloquear os endpoints públicos.
+
 - **Pydantic:** valida os contratos de pets, jobs e callbacks antes da execução.
+
 - **Fila FIFO em memória:** suficiente para a simulação técnica, simples de
   testar e adequada ao escopo do projeto. Em produção real, o correto é ser substituída
   por uma fila externa (por exemplo, Redis, RabbitMQ ou SQS), com
   confirmação de processamento, retries, dead-letter queue e monitoramento.
+
 - **Callback HTTP:** permite que o worker atualize o estado persistido na API.
+
 - **Polling de 25 segundos:** evita manter uma conexão indefinida e retorna
   `204` quando não há atualização.
+
 - **Armazenamento local:** mantém a implementação pequena e permite consultar o
   caminho salvo no documento.
+
+- **Sobre idempotência de upload:** O sistema presume que varios tipos de arquivos serão enviado,
+  ex: relatorio clinico, primeira consulta e cada um desses arquivos pode ser enviados multiplas vezes dependendo do tipo de documento que pode ser UNIQUE ou MULTIPLE, aquivos UNIQUE não podem ser repetidos desde que o nome do documento não mude, então se forem enviados novamente um erro será gerado (`para alterar um documento ja existente, foi criada uma rota para isso`), os MULTIPLE podem ser enviados multiplas vezes independente do nome ser igual, são atribuidos de um UUID. 
 
 ## Limitações e próximos passos
 
