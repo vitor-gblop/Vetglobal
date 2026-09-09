@@ -28,10 +28,11 @@ class Worker:
         try:
             await asyncio.sleep(5)  # Simulate a long-running task
             text = extract_document_text(content, extension)
+            
             if use_ai:
                 summary = summarize_text(text)
             else: 
-                extract_formatted_data(text) 
+                summary = extract_formatted_data(text)
                 
         except Exception as exc:
             logger.exception("Job %s failed while summarizing", job_id)
