@@ -12,21 +12,21 @@ from src.main.schemas.document_schemas import DocumentResponse
 from src.main.connection.database import get_db
 from sqlalchemy.orm import Session
 # schemas
-from src.main.schemas.pet_schemas import PetCreate, PetResponse
+from src.main.schemas.pet_schemas import PetCreate, PetResponse, PetUpdate
 from src.main.schemas.job_schemas import JobStatus
 # models
 from src.main.models.pet_model import Pet
 from src.main.models.job_model import Job
 from src.main.models.pet_doc_model import Pet_Document 
 # utils
-from src.main.utils.file_utils import file_reader, file_validator, save_file_to_disk
+from src.main.utils.file_utils import file_reader, file_validator, save_file_to_disk, remove_files_from_storage
 from src.main.utils.model_utils import now
 
 
 pet_router = APIRouter(prefix='/pets', tags=['pets'])
 load_dotenv()
 
-
+# Create
 @pet_router.post('/', response_model= PetResponse, status_code=status.HTTP_201_CREATED)
 async def create_pet(
     payload: PetCreate, 
@@ -48,13 +48,59 @@ async def create_pet(
     return new_pet
 
 
+# Read
+def _get_pet(pet_id: int, db: Session) -> Pet:
+    pet = db.query(Pet).filter(Pet.id == pet_id).first()
+    if not pet:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Pet with id {pet_id} not found",
+        )
+    return pet
+
+@pet_router.get("/", response_model=list[PetResponse], status_code=status.HTTP_200_OK)
+def list_pets(db: Session = Depends(get_db)):
+    return db.query(Pet).order_by(Pet.id).all()
+
+
+@pet_router.get("/{pet_id}", response_model=PetResponse, status_code=status.HTTP_200_OK)
+def retrieve_pet(pet_id: int, db: Session = Depends(get_db)):
+    return _get_pet(pet_id, db)
+
+# Update
+def _update_pet(pet_id: int, payload: PetUpdate, db: Session) -> Pet:
+    pet = _get_pet(pet_id, db)
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(pet, field, value)
+    db.commit()
+    db.refresh(pet)
+    return pet
+
+@pet_router.put("/{pet_id}", response_model=PetResponse, status_code=status.HTTP_200_OK)
+def update_pet(pet_id: int, payload: PetUpdate, db: Session = Depends(get_db)):
+    return _update_pet(pet_id, payload, db)
+
+
+# Delete
+@pet_router.delete("/{pet_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_pet(pet_id: int, db: Session = Depends(get_db)) -> None:
+    pet = _get_pet(pet_id, db)
+    documents = list(pet.documents)
+    # remove files
+    remove_files_from_storage(documents)
+    
+    db.delete(pet)
+    db.commit()
+    return None
+
+
 
 @pet_router.post('/{pet_id}/documents', status_code=status.HTTP_202_ACCEPTED)
 async def upload_document(
     pet_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-):
+) -> DocumentResponse:
     return await _upload_document(pet_id, file, db, use_ai=False)
 
 
@@ -63,16 +109,15 @@ async def upload_document_for_ai(
     pet_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-):
+) -> DocumentResponse:
     return await _upload_document(pet_id, file, db, use_ai=True)
-
 
 async def _upload_document(
     pet_id: int,
     file: UploadFile,
     db: Session,
     use_ai: bool,
-):
+) -> DocumentResponse:
     file_ext = file_validator(file)
     
     # 1. Busca e valida se o pet existe
@@ -86,7 +131,6 @@ async def _upload_document(
     contents = await file.read()
 
     if file_ext == "txt":
-
         # 2. Lendo conteúdo para a lógica do worker
         text_content = file_reader(contents) # returns text 
 
