@@ -192,6 +192,22 @@ Também é possível abrir a documentação interativa:
 - API: http://127.0.0.1:8000/docs
 - Worker: http://127.0.0.1:8001/docs
 
+## Frontend React
+
+O frontend simples fica em [frontend/](./frontend/) e permite criar pets,
+enviar TXT/PDF, escolher `UNIQUE` ou `MULTIPLE`, ativar sumarização por IA e
+acompanhar o job pelo endpoint de polling.
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Abra http://localhost:5173. A API precisa estar rodando em `8000` e o worker
+em `8001`. O middleware CORS da API já permite essas duas origens locais.
+
 ## Endpoints da API
 
 ### Criar um pet
