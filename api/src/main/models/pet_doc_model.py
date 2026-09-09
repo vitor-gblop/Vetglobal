@@ -7,7 +7,11 @@ class Pet_Document(Base):
     __tablename__ = "pet_documents"
 
     id = Column(Integer, primary_key = True, index = True)
-    pet_id = Column(Integer, ForeignKey("pets.id"), nullable = False)
+    pet_id = Column(
+        Integer,
+        ForeignKey("pets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     file_name = Column(String, nullable = False)
     file_extension = Column(String, nullable = False)
     file_path = Column(String, nullable = False)
@@ -17,4 +21,9 @@ class Pet_Document(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
     pet = relationship("Pet", back_populates="documents")
-    jobs = relationship("Job", back_populates="document")
+    jobs = relationship(
+        "Job",
+        back_populates="document",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

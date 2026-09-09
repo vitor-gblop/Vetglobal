@@ -8,7 +8,11 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, index=True)
-    document_id = Column(Integer, ForeignKey("pet_documents.id"), nullable=False)
+    document_id = Column(
+        Integer,
+        ForeignKey("pet_documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     status = Column(Enum(JobStatus), nullable=False)
     error_message = Column(Text, nullable=True)
     #
