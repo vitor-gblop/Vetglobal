@@ -6,3 +6,4 @@ database.py
 PROJECT.md
 /.vscode
 docs
+.pytest_cache
