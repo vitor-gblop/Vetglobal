@@ -1,5 +1,6 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.orm import relationship
+from src.main.schemas.document_schemas import DocumentTypes
 from src.main.connection.database import Base
 
 
@@ -15,6 +16,7 @@ class Pet_Document(Base):
     file_name = Column(String, nullable = False)
     file_extension = Column(String, nullable = False)
     file_path = Column(String, nullable = False)
+    doc_type = Column(Enum(DocumentTypes), nullable=False)
     summary = Column(String, nullable = True)
     #
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
