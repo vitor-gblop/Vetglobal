@@ -2,10 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# -- Pets Schemas --
+# -- Schemas de Pets --
 
 class PetCreate(BaseModel):
-    # 
     name: str = Field(..., min_length=1, example="Hank")
     owner_name: str = Field(..., min_length=1, example="John Bergeson")
     species: str = Field(..., min_length=1, example="Corgi")
@@ -18,7 +17,6 @@ class PetUpdate(BaseModel):
 
 
 class PetResponse(PetCreate):
-    # 
     id: int
     name: str
     owner_name: str

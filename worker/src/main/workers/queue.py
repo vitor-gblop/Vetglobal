@@ -1,6 +1,6 @@
 import asyncio
 import logging
-# schemas
+# esquemas
 from src.main.schemas.job_schemas import Job
 # workers
 from src.main.workers.worker import Worker
@@ -9,7 +9,7 @@ from src.main.workers.worker import Worker
 logger = logging.getLogger(__name__)
 
 class JobQueue:
-    """FIFO in-memory queue with exactly one processing consumer."""
+    """Fila FIFO em memória com exatamente um consumidor de processamento."""
 
     def __init__(self, worker_factory=None) -> None:
         self._queue: asyncio.Queue[Job] = asyncio.Queue()
@@ -95,7 +95,7 @@ class _CallbackSender:
 
         body = json.dumps(payload).encode("utf-8")
         
-        # callback requisition
+        # requisição de callback
         def send() -> None:
             request = Request(
                 self._callback_url,
@@ -112,5 +112,5 @@ class _CallbackSender:
         await asyncio.to_thread(send)
 
 
-# Keep the short name available for callers that already imported Queue.
+# Mantém o nome curto disponível para chamadores que já importaram Queue.
 Queue = JobQueue

@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 load_dotenv()
 
-# Using postgres
+# Usando PostgreSQL
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:

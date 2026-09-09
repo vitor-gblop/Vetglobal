@@ -7,18 +7,18 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile, File
 from dotenv import load_dotenv
-# database
+# banco de dados
 from src.main.schemas.document_schemas import DocumentPayload, DocumentResponse
 from src.main.connection.database import get_db
 from sqlalchemy.orm import Session
-# schemas
+# esquemas
 from src.main.schemas.pet_schemas import PetCreate, PetResponse, PetUpdate
 from src.main.schemas.job_schemas import JobStatus
-# models
+# modelos
 from src.main.models.pet_model import Pet
 from src.main.models.job_model import Job
 from src.main.models.pet_doc_model import DocumentTypes, Pet_Document 
-# utils
+# utilitários
 from src.main.utils.file_utils import (
     build_file_path,
     file_reader,
@@ -32,7 +32,7 @@ from src.main.utils.model_utils import now
 pet_router = APIRouter(prefix='/pets', tags=['pets'])
 load_dotenv()
 
-# Create
+# Criação
 @pet_router.post('/', response_model= PetResponse, status_code=status.HTTP_201_CREATED)
 async def create_pet(
     payload: PetCreate, 
@@ -45,16 +45,16 @@ async def create_pet(
         age = payload.age,
         created_at = now()
     )
-    # add pet
+    # adiciona o pet
     db.add(new_pet)
     db.commit()
     db.refresh(new_pet)
     
-    # response
+    # resposta
     return new_pet
 
 
-# Read
+# Leitura
 def _get_pet(pet_id: int, db: Session) -> Pet:
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
     if not pet:
@@ -73,7 +73,7 @@ def list_pets(db: Session = Depends(get_db)):
 def retrieve_pet(pet_id: int, db: Session = Depends(get_db)):
     return _get_pet(pet_id, db)
 
-# Update
+# Atualização
 def _update_pet(pet_id: int, payload: PetUpdate, db: Session) -> Pet:
     pet = _get_pet(pet_id, db)
     for field, value in payload.model_dump(exclude_unset=True).items():
@@ -87,12 +87,12 @@ def update_pet(pet_id: int, payload: PetUpdate, db: Session = Depends(get_db)):
     return _update_pet(pet_id, payload, db)
 
 
-# Delete
+# Exclusão
 @pet_router.delete("/{pet_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_pet(pet_id: int, db: Session = Depends(get_db)) -> None:
     pet = _get_pet(pet_id, db)
     documents = list(pet.documents)
-    # remove files
+    # remove arquivos
     remove_files_from_storage(documents)
     
     db.delete(pet)
@@ -129,7 +129,7 @@ async def overwrite_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> DocumentResponse:
-    """Replace a document's contents while keeping its database identity."""
+    """Substitui o conteúdo de um documento sem perder sua identidade no banco de dados."""
     document = (
         db.query(Pet_Document)
         .filter(Pet_Document.id == document_id)
@@ -206,11 +206,11 @@ async def _upload_document(
     file_name = Path(file_path).name
 
     if file_ext == "txt":
-        # 2. Lendo conteúdo para a lógica do worker
-        text_content = file_reader(contents) # returns text 
+        # 2. Lendo o conteúdo para a lógica do worker
+        text_content = file_reader(contents)  # retorna texto
     
     elif file_ext == "pdf":
-        text_content = base64.b64encode(contents).decode("ascii") # returns base 64 encoded text
+        text_content = base64.b64encode(contents).decode("ascii")  # retorna texto codificado em base64
 
     if document_to_overwrite:
         existing_document = document_to_overwrite
@@ -240,7 +240,7 @@ async def _upload_document(
     if document_to_overwrite and old_file_path != file_path:
         Path(old_file_path).unlink(missing_ok=True)
 
-    # make callback to verify new data from worker
+    # cria o callback para verificar os dados novos do worker
     api_base_url = os.environ["API_BASE_URL"].rstrip("/")
     worker_url = os.environ["WORKER_START_URL"]
     callback_url = f"{api_base_url}/internal/jobs/{new_job.id}/complete"
@@ -254,14 +254,13 @@ async def _upload_document(
             "callback_url": callback_url,
         }
     ).encode("utf-8")
-    # start the worker service
+    # inicia o serviço do worker
     request = Request(
         worker_url,
         data=_payload,
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    # 
     try:
         await asyncio.to_thread(urlopen, request, timeout=10)
         

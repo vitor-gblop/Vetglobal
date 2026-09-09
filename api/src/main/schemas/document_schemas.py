@@ -1,10 +1,10 @@
 from enum import Enum
 
 from pydantic import BaseModel, Field
-# schemas
+# esquemas
 from src.main.schemas.job_schemas import JobStatus
 
-# -- Doc Schemas --
+# -- Schemas de Documentos --
 
 class DocumentTypes(str, Enum):
     UNIQUE = "UNIQUE"

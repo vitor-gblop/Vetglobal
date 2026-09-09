@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from src.main.connection.database import Base
 from src.main.schemas.job_schemas import JobStatus
 
-# Model
+# Modelo
 class Job(Base):
     __tablename__ = "jobs"
 
@@ -15,7 +15,6 @@ class Job(Base):
     )
     status = Column(Enum(JobStatus), nullable=False)
     error_message = Column(Text, nullable=True)
-    #
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
     

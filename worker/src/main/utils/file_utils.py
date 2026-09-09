@@ -11,7 +11,7 @@ STORAGE_DIR = Path("src/main/docs")
 
 
 def extract_document_text(content: str, extension: str) -> str:
-    """Decode a job payload and extract text from TXT or PDF documents."""
+    """Decodifica o payload de um job e extrai o texto de documentos TXT ou PDF."""
     if extension == "txt":
         return content
 
@@ -29,7 +29,7 @@ def extract_document_text(content: str, extension: str) -> str:
     return text
 
 
-# These are the only accepted labels: each English label and its pt-BR translation.
+# Estes são os únicos rótulos aceitos: cada rótulo em inglês e sua tradução para pt-BR.
 _FIELD_LABELS = {
     "pet_name": ("pet name", "nome do pet"),
     "age": ("age", "idade"),
@@ -57,7 +57,7 @@ _INLINE_FIELD_PATTERN = re.compile(
 
 
 def _extract_fields(text: str) -> dict[str, str]:
-    """Extract supported labels and collect their multiline values."""
+    """Extrai os rótulos suportados e coleta seus valores multilinha."""
     fields: dict[str, list[str]] = {field: [] for field in _FIELD_LABELS}
     current_field: str | None = None
 
@@ -73,7 +73,7 @@ def _extract_fields(text: str) -> dict[str, str]:
         if current_field and raw_line.strip():
             fields[current_field].append(raw_line.strip())
 
-    # PDF text extraction commonly flattens all fields into one line.
+    # A extração de texto de PDF geralmente achata todos os campos em uma única linha.
     if sum(bool(values) for values in fields.values()) < len(fields):
         inline_text = " ".join(text.split())
         for match in _INLINE_FIELD_PATTERN.finditer(inline_text):
@@ -89,7 +89,7 @@ def _extract_fields(text: str) -> dict[str, str]:
 
 
 def extract_formatted_data(text: str) -> str:
-    """Normalize the supported TXT template into a deterministic summary."""
+    """Normaliza o template TXT suportado em um resumo determinístico."""
     fields = _extract_fields(text)
     return (
         f"Paciente: {fields['pet_name']} | Idade: {fields['age']} | "
@@ -100,12 +100,12 @@ def extract_formatted_data(text: str) -> str:
 
 
 def extract_formated_data(text: str) -> str:
-    """Backward-compatible alias for the original misspelled function name."""
+    """Alias compatível com a versão anterior para o nome da função com erro de grafia."""
     return extract_formatted_data(text)
 
 
 def save_file_to_disk(file: UploadFile, pet_name: str, owner_name: str) -> str:
-    """Save the uploaded document with a unique, predictable filename."""
+    """Salva o documento enviado com um nome de arquivo único e previsível."""
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     file_extension = Path(file.filename).suffix.lower() if file.filename else ".txt"
 

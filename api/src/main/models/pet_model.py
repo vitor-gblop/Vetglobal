@@ -11,7 +11,6 @@ class Pet(Base):
     owner_name = Column(String, nullable=False)
     species = Column(String, nullable=False)
     age = Column(Integer, nullable=False)
-    #
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 

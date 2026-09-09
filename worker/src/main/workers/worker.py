@@ -24,9 +24,9 @@ class Worker:
         extension: str = "txt",
         use_ai: bool = False,
     ) -> str:
-        """Read and summarize one document, then notify the API."""
+        """Lê e resume um documento e, em seguida, notifica a API."""
         try:
-            await asyncio.sleep(5)  # Simulate a long-running task
+            await asyncio.sleep(5)  # Simula uma tarefa de longa duração
             text = extract_document_text(content, extension)
             
             if use_ai:

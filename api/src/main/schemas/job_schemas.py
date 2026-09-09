@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
-# -- Job Schemas --
+# -- Schemas de Jobs --
 
 class JobStatus(str, Enum):
     ENQUEUED = "ENQUEUED"
@@ -26,7 +26,7 @@ class JobInternResponse(BaseModel):
 
 
 class JobCompletion(BaseModel):
-    """Payload sent by a worker when a job reaches a terminal state."""
+    """Payload enviado por um worker quando um job alcança um estado terminal."""
 
     status: JobStatus
     summary: Optional[str] = None

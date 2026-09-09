@@ -19,7 +19,7 @@ def worker_callback(
             detail=f"Job with id {job_id} not found",
         )
 
-    # A retry of a callback must not overwrite an already completed result.
+    # Uma nova tentativa de callback não deve sobrescrever um resultado já concluído.
     if job.status not in (JobStatus.DONE, JobStatus.FAILED):
         job.status = payload.status
         if payload.status == JobStatus.DONE:

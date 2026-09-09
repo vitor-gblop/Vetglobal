@@ -45,10 +45,10 @@ async def poll_document(
     after_job_id: int = 0,
     db: Session = Depends(get_db),
 ):
-    """Wait up to 25 seconds for a newer job to reach a terminal state.
+    """Aguarda até 25 segundos para que um job mais recente alcance um estado terminal.
 
-    A timeout returns 204 without a response body, so clients can retry with
-    the same ``after_job_id``.
+    Em caso de timeout, retorna 204 sem corpo de resposta, para que os clientes
+    possam tentar novamente com o mesmo ``after_job_id``.
     """
     if after_job_id < 0:
         raise HTTPException(
