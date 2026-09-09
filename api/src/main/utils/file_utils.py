@@ -107,3 +107,13 @@ def save_file_to_disk(file: UploadFile, pet_name: str, owner_name: str) -> str:
     with file_path.open("wb") as buffer:
         buffer.write(file.file.read())
     return str(file_path)
+
+
+def remove_files_from_storage(documents: list) -> None:
+    """Remove the files associated with documents deleted from the database."""
+    storage_root = STORAGE_DIR.resolve()
+    for document in documents:
+        file_path = Path(document.file_path).resolve()
+        if storage_root not in file_path.parents:
+            raise ValueError(f"Document path is outside storage: {document.file_path}")
+        file_path.unlink(missing_ok=True)
