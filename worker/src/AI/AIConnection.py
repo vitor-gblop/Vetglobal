@@ -13,8 +13,8 @@ def summarize_text(
     language: str | None = None,
     model: str | None = None,
 ) -> str:
-    language = language or os.getenv("SUMMARY_LANGUAGE", "portuguese")
-    model = model or os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
+    language = language or os.getenv("SUMMARY_LANGUAGE", "english")
+    model = model or os.getenv("GOOGLE_MODEL", "gemini-3.5-flash-lite")
     #
     if not api_key:
         raise ValueError("Defina a variável de ambiente GOOGLE_API_KEY.")
@@ -23,8 +23,8 @@ def summarize_text(
     response = client.models.generate_content(
         model=model,
         contents=(
-            f"Resuma o texto abaixo em {language}, destacando os pontos principais "
-            "e mantendo um resumo claro e objetivo, de acordo com o modelo:\n\n"
+            f"resuma o texto abaixo em {language}, destacando os pontos principais "
+            "e mantendo um resumo claro e objetivo, de acordo com o modelo(não gere texto extra nem explicações apenas o resumo exigido):\n\n"
             "nome do pet ou animal: \n"
             "nome do tutor: \n"
             "idade: \n"
