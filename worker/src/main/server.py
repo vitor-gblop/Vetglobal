@@ -23,4 +23,4 @@ app.include_router(worker_router)
 
 @app.get("/")
 def api_home() -> dict[str, str]:
-    return {"message": "Worker Queue Running"}
+    return {"message": "Worker service running"}

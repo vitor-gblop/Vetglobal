@@ -24,7 +24,7 @@ class JobStatus(str, Enum):
 
 class JobCreate(BaseModel):
     job_id: Optional[int] = Field(default=None, ge=1)
-    document_id: int = Field(..., min=0)
+    document_id: int = Field(..., ge=0)
     document_content: str = Field(..., min_length=10)
     document_extension: str = Field(default="txt", pattern=r"^(txt|pdf)$")
     use_ai: bool = False
