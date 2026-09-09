@@ -5,10 +5,10 @@ import os
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile, File
 from dotenv import load_dotenv
 # database
-from src.main.schemas.document_schemas import DocumentResponse
+from src.main.schemas.document_schemas import DocumentPayload, DocumentResponse
 from src.main.connection.database import get_db
 from sqlalchemy.orm import Session
 # schemas
@@ -17,9 +17,15 @@ from src.main.schemas.job_schemas import JobStatus
 # models
 from src.main.models.pet_model import Pet
 from src.main.models.job_model import Job
-from src.main.models.pet_doc_model import Pet_Document 
+from src.main.models.pet_doc_model import DocumentTypes, Pet_Document 
 # utils
-from src.main.utils.file_utils import file_reader, file_validator, save_file_to_disk, remove_files_from_storage
+from src.main.utils.file_utils import (
+    build_file_path,
+    file_reader,
+    file_validator,
+    remove_files_from_storage,
+    save_file_to_disk,
+)
 from src.main.utils.model_utils import now
 
 
@@ -98,60 +104,132 @@ def delete_pet(pet_id: int, db: Session = Depends(get_db)) -> None:
 @pet_router.post('/{pet_id}/documents', status_code=status.HTTP_202_ACCEPTED)
 async def upload_document(
     pet_id: int,
+    document_type: DocumentTypes = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> DocumentResponse:
-    return await _upload_document(pet_id, file, db, use_ai=False)
+    body = DocumentPayload(document_type=document_type)
+    return await _upload_document(pet_id, body, file, db, use_ai=False)
 
 
 @pet_router.post('/{pet_id}/documents/ai', status_code=status.HTTP_202_ACCEPTED)
 async def upload_document_for_ai(
     pet_id: int,
+    document_type: DocumentTypes = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ) -> DocumentResponse:
-    return await _upload_document(pet_id, file, db, use_ai=True)
+    body = DocumentPayload(document_type=document_type)
+    return await _upload_document(pet_id, body, file, db, use_ai=True)
+
+
+@pet_router.put('/documents/{document_id}', status_code=status.HTTP_202_ACCEPTED)
+async def overwrite_document(
+    document_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> DocumentResponse:
+    """Replace a document's contents while keeping its database identity."""
+    document = (
+        db.query(Pet_Document)
+        .filter(Pet_Document.id == document_id)
+        .first()
+    )
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document with id {document_id} not found",
+        )
+
+    return await _upload_document(
+        document.pet_id,
+        DocumentPayload(document_type=document.doc_type),
+        file,
+        db,
+        use_ai=False,
+        document_to_overwrite=document,
+    )
+
 
 async def _upload_document(
     pet_id: int,
+    body: DocumentPayload,
     file: UploadFile,
     db: Session,
     use_ai: bool,
+    document_to_overwrite: Pet_Document | None = None,
 ) -> DocumentResponse:
     file_ext = file_validator(file)
     
     # 1. Busca e valida se o pet existe
-    _pet = db.query(Pet).filter_by(id=pet_id).first()
-    if not _pet:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pet not found",
-        )
-    
+    _pet = _get_pet(pet_id, db)
+
     contents = await file.read()
+    candidate_path = (
+        Path(document_to_overwrite.file_path)
+        if document_to_overwrite
+        else build_file_path(
+            file,
+            body.document_type.value,
+            _pet.name,
+            _pet.owner_name,
+            f".{file_ext}",
+        )
+    )
+    candidate_file_name = candidate_path.name
+    if (
+        not document_to_overwrite
+        and body.document_type == DocumentTypes.UNIQUE
+        and db.query(Pet_Document)
+        .filter_by(
+            doc_type=body.document_type,
+            file_name=candidate_file_name,
+        )
+        .first()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Já existe um documento UNIQUE com esse nome",
+        )
+
+    file_path = save_file_to_disk(
+        file,
+        body.document_type.value,
+        _pet.name,
+        _pet.owner_name,
+        existing_path=(
+            document_to_overwrite.file_path
+            if document_to_overwrite
+            else None
+        ),
+    )
+    file_name = Path(file_path).name
 
     if file_ext == "txt":
         # 2. Lendo conteúdo para a lógica do worker
         text_content = file_reader(contents) # returns text 
-
-        # 3. Salva o arquivo no disco local
-        file_path = save_file_to_disk(file, _pet.name, _pet.owner_name)
-        file_name = Path(file_path).name
     
     elif file_ext == "pdf":
-        file_path = save_file_to_disk(file, _pet.name, _pet.owner_name)
-        file_name = Path(file_path).name
         text_content = base64.b64encode(contents).decode("ascii") # returns base 64 encoded text
 
-    # 4. Cria e adiciona o documento no banco
-    new_doc = Pet_Document(
-        pet_id=_pet.id,
-        file_name=file_name,
-        file_extension=file_ext,
-        file_path=file_path,
-        summary="",
-    )
-    db.add(new_doc)
+    if document_to_overwrite:
+        existing_document = document_to_overwrite
+        old_file_path = existing_document.file_path
+        new_doc = existing_document
+        new_doc.file_name = file_name
+        new_doc.file_extension = file_ext
+        new_doc.file_path = file_path
+        new_doc.summary = ""
+    else:
+        new_doc = Pet_Document(
+            pet_id=_pet.id,
+            file_name=file_name,
+            file_extension=file_ext,
+            file_path=file_path,
+            doc_type=body.document_type,
+            summary="",
+        )
+        db.add(new_doc)
     db.flush()
 
     new_job = Job(document_id=new_doc.id, status=JobStatus.ENQUEUED)
@@ -159,6 +237,8 @@ async def _upload_document(
     db.commit()
     db.refresh(new_doc)
     db.refresh(new_job)
+    if document_to_overwrite and old_file_path != file_path:
+        Path(old_file_path).unlink(missing_ok=True)
 
     # make callback to verify new data from worker
     api_base_url = os.environ["API_BASE_URL"].rstrip("/")

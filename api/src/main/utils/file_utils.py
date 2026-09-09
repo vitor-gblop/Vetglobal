@@ -91,22 +91,47 @@ def extract_formated_data(text: str) -> str:
     return extract_formatted_data(text)
 
 
-def save_file_to_disk(file: UploadFile, pet_name: str, owner_name: str) -> str:
-    """Save the uploaded document with a unique, predictable filename."""
+def save_file_to_disk(
+    file: UploadFile,
+    doc_type: str,
+    pet_name: str,
+    owner_name: str,
+    existing_path: str | None = None,
+) -> str:
+    """Save the uploaded document using its document identity as its filename."""
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     file_extension = Path(file.filename).suffix.lower() if file.filename else ".txt"
 
-    safe_pet_name = pet_name.strip().replace(" ", "_").lower()
-    safe_owner_name = owner_name.strip().replace(" ", "_").lower()
-    
-    unique_suffix = uuid.uuid4().hex[:6]
-    
-    file_path = STORAGE_DIR / f"{safe_pet_name}_{safe_owner_name}_{unique_suffix}{file_extension}"
+    if existing_path:
+        file_path = Path(existing_path)
+    else:
+        file_path = build_file_path(file, doc_type, pet_name, owner_name, file_extension)
 
     file.file.seek(0)
     with file_path.open("wb") as buffer:
         buffer.write(file.file.read())
     return str(file_path)
+
+
+def build_file_path(
+    file: UploadFile,
+    doc_type: str,
+    pet_name: str,
+    owner_name: str,
+    file_extension: str | None = None,
+) -> Path:
+    """Build the storage path without writing the uploaded contents."""
+    extension = file_extension or (
+        Path(file.filename).suffix.lower() if file.filename else ".txt"
+    )
+    safe_file_name = Path(file.filename or "document").stem.strip().replace(" ", "_").lower()
+    safe_pet_name = pet_name.strip().replace(" ", "_").lower()
+    safe_owner_name = owner_name.strip().replace(" ", "_").lower()
+    file_name = f"{safe_file_name}_{safe_pet_name}_{safe_owner_name}_{doc_type.lower()}"
+    # if not unique add uuid
+    if doc_type.lower() != "unique":
+        file_name = f"{file_name}_{uuid.uuid4().hex[:6]}"
+    return STORAGE_DIR / f"{file_name}{extension}"
 
 
 def remove_files_from_storage(documents: list) -> None:
