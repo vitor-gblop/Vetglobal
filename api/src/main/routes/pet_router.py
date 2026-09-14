@@ -44,7 +44,6 @@ async def create_pet(
         owner_name = payload.owner_name,
         species = payload.species,
         age = payload.age,
-        created_at = now()
     )
     # adiciona o pet
     db.add(new_pet)
