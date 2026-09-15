@@ -51,7 +51,7 @@ services:
       WORKER_PORT: "8001"
       WORKER_RELOAD: "false"
       GOOGLE_API_KEY: ""
-      GOOGLE_MODEL: gemini-2.5-flash-lite
+      GOOGLE_MODEL: gemini-3.5-flash-lite
       SUMMARY_LANGUAGE: portuguese
       PYTHONUNBUFFERED: "1"
     ports:
