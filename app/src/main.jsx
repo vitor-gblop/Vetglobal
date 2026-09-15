@@ -165,7 +165,7 @@ function App() {
         </form>
 
         <form className="card" onSubmit={uploadDocument}>
-          <h2>2. Enviar documento</h2>
+          <h2>2. Enviar documento (pet {pet.id})</h2>
           <label>
             Tipo do documento
             <select
