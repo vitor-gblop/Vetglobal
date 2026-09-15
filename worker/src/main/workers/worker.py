@@ -29,6 +29,7 @@ class Worker:
             await asyncio.sleep(5)  # Simula uma tarefa de longa duração
             text = extract_document_text(content, extension)
             
+            summary = ""
             if use_ai:
                 summary = summarize_text(text)
             else: 
